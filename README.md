@@ -1,15 +1,11 @@
-# Playground: Gradle
+# Indolent
 
-<!-- When using the Playground to bootstrap a project, replace this by your project description. -->
-This a template to easily bootstrap your projects.
-
-> This project is part of the OpenSavvy Playground.
-> To learn more, visit [this page](docs/playground/README.md).
+Configuration parser that actively avoids doing anything unnecessary, deferring work until the last possible moment.
+Indolent can watch configuration files to perform stateful reloads.
 
 ## License
 
-<!-- Mentions under which license you are publishing the project. -->
-<!-- Add the full text to the LICENSE file. -->
+This project is licensed under the [Apache 2.0 license](LICENSE).
 
 ## Contributing
 
