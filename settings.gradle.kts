@@ -51,6 +51,8 @@ plugins {
 }
 
 include(
+	"primitives",
+
 	"gradle:templates:template-app",
 	"gradle:templates:template-lib",
 )
