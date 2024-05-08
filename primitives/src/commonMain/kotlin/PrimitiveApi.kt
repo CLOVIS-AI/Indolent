@@ -8,6 +8,7 @@ package opensavvy.indolent.primitives
  * If you are not writing a parsing integration, and in particular if you are writing an application,
  * we recommend avoiding using these classes directly.
  */
+@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION, AnnotationTarget.TYPEALIAS)
 @RequiresOptIn
 @MustBeDocumented
 annotation class PrimitiveApi
