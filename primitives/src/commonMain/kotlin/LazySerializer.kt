@@ -6,11 +6,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.coroutines.CoroutineContext
 
-/**
- * [Serializer] implementation that waits until the last possible time to write its values: when [flush] is called.
- */
 @PrimitiveApi
-abstract class LazySerializer(
+private class SerializeOnFlush(
+	private val upstream: DirectSerializer,
 	private val parentContext: CoroutineContext,
 ) : Serializer {
 
@@ -38,9 +36,7 @@ abstract class LazySerializer(
 		}
 	}
 
-	abstract suspend fun <T> write(cursor: Cursor<*, *, T>, content: T)
-
-	final override fun <T> write(cursor: Cursor<*, *, T>, content: Observable<T>) {
+	override fun <T> write(cursor: Cursor<*, *, T>, content: Observable<T>) {
 		val owner = Triple("write", cursor, content)
 		onWaitListAvailable(owner) {
 			onBufferAvailable(owner) {
@@ -49,7 +45,7 @@ abstract class LazySerializer(
 		}
 	}
 
-	final override fun <T> writeDefault(cursor: Cursor<*, *, T>, content: Observable<T>) {
+	override fun <T> writeDefault(cursor: Cursor<*, *, T>, content: Observable<T>) {
 		val owner = Triple("default write", cursor, content)
 		onWaitListAvailable(owner) {
 			onBufferAvailable(owner) {
@@ -58,8 +54,6 @@ abstract class LazySerializer(
 			}
 		}
 	}
-
-	protected open suspend fun onFlush() {}
 
 	override suspend fun flush() {
 		// Stop anyone from getting into the wait list while we are flushing it
@@ -73,7 +67,7 @@ abstract class LazySerializer(
 				supervisorScope {
 					for ((cursor, content) in buffer) {
 						launch {
-							write(cursor, content.observe().first())
+							upstream.write(cursor, content.observe().first())
 						}
 					}
 				}
@@ -81,16 +75,25 @@ abstract class LazySerializer(
 				buffer.clear()
 			}
 
-			onFlush()
+			upstream.flush()
 
 			// Re-enable the wait list
 			waitList = CoroutineScope(waitList.coroutineContext + SupervisorJob(parentContext[Job]))
 		}
 	}
 
-	suspend fun close() {
+	override suspend fun close() {
 		flush()
 		waitList.coroutineContext.job.cancel("LazySerializer.close() was called")
 		waitUntilWaitListIsAvailable.coroutineContext.job.cancel("LazySerializer.close() was called")
+
+		upstream.close()
 	}
 }
+
+/**
+ * Implements [Serializer] by calling [DirectSerializer.write] at the last possible moment: when [DirectSerializer.flush] is called.
+ */
+@PrimitiveApi
+fun DirectSerializer.serializeOnFlush(context: CoroutineContext): Serializer =
+	SerializeOnFlush(this, context)
