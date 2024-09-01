@@ -14,7 +14,7 @@ include:
 
 variables:
   # https://gitlab.com/opensavvy/automation/containers
-  ci_containers: 0.4.1
+  ci_containers: 0.4.4
 
 workflow:
   rules:
@@ -69,6 +69,9 @@ check[jvm]:
       :koverHtmlReport
       -x jsBrowserTest
       -x jsNodeTest
+      -x wasmJsBrowserTest
+      -x wasmJsNodeTest
+      -x wasmWasiNodeTest
       -x linuxX64Test
       -x iosSimulatorArm64Test
       koverVerify --rerun
@@ -91,7 +94,7 @@ check[jsBrowser]:
 
   script:
     - >
-      ./gradlew jsBrowserTest
+      ./gradlew jsBrowserTest wasmJsBrowserTest
       -PappVersion=$project_version
 
   interruptible: true
@@ -102,7 +105,7 @@ check[nodeJs]:
 
   script:
     - >
-      ./gradlew jsNodeTest
+      ./gradlew jsNodeTest wasmJsNodeTest wasmWasiNodeTest
       -PappVersion=$project_version
 
   interruptible: true
@@ -296,6 +299,28 @@ dokka:
     deployment_tier: development
 
   interruptible: true
+
+# endregion
+# region Qodana
+
+qodana[jvm]:
+  needs: [ ]
+  image:
+    name: jetbrains/qodana-jvm
+    entrypoint: [ "" ]
+  script:
+    - qodana
+  artifacts:
+    paths:
+      - qodana
+  rules:
+    - if: $QODANA_TOKEN == null
+      when: never
+    - if: $CI_COMMIT_REF_NAME == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+      allow_failure: true
+    - when: manual
+      allow_failure: true
 
 # endregion
 # region Automatically mirror the previous layer of the playground
