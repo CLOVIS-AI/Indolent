@@ -21,7 +21,7 @@ plugins {
 
 dependencies {
 	// List the 'library' projects
-	dokkatoo(projects.primitives)
+	dokka(projects.primitives)
 
 	kover(projects.primitives)
 }
