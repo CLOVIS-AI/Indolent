@@ -1,14 +1,13 @@
 package opensavvy.indolent.primitives
 
-import io.kotest.matchers.shouldBe
-import opensavvy.prepared.runner.kotest.PreparedSpec
+import opensavvy.prepared.runner.testballoon.preparedSuite
 
 private infix fun Any.shouldBeString(other: String) {
-	toString() shouldBe other
+	check(toString() == other)
 }
 
 @OptIn(PrimitiveApi::class)
-class CursorTest : PreparedSpec({
+val CursorTest by preparedSuite {
 
 	suite("Root cursors") {
 		suite("Scalars") {
@@ -52,9 +51,9 @@ class CursorTest : PreparedSpec({
 			add(Cursor.root(Cursor.Type.Record).child("foo", Cursor.Type.Scalar(String::class)))
 		}
 
-		set shouldBe setOf(
+		check(set == setOf(
 			Cursor.root(Cursor.Type.Scalar(Int::class)),
 			Cursor.root(Cursor.Type.Record).child("foo", Cursor.Type.Scalar(String::class))
-		)
+		))
 	}
-})
+}

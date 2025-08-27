@@ -2,15 +2,13 @@
 
 package opensavvy.indolent.primitives
 
-import io.kotest.assertions.withClue
-import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import opensavvy.prepared.runner.kotest.PreparedSpec
+import opensavvy.prepared.runner.testballoon.preparedSuite
 import opensavvy.prepared.suite.backgroundScope
 import kotlin.reflect.KClass
 
@@ -65,7 +63,7 @@ private class SpyDirectSerializer : DirectSerializer {
 	}
 }
 
-class LazySerializerTest : PreparedSpec({
+val LazySerializerTest by preparedSuite {
 	suite("Writes are delayed until flushes") {
 		test("No writes are executed before 'flush' is called") {
 			val spy = SpyDirectSerializer()
@@ -76,9 +74,8 @@ class LazySerializerTest : PreparedSpec({
 
 			delay(1) // Give the machinery a chance to run
 
-			withClue("The number of writes should be 0, because we didn't call 'flush' yet, and the implementation should be lazy") {
-				spy.countWrites() shouldBe 0
-			}
+			println("The number of writes should be 0, because we didn't call 'flush' yet, and the implementation should be lazy")
+			check(spy.countWrites() == 0)
 		}
 
 		test("Writes are executed when 'flush' is called") {
@@ -91,9 +88,8 @@ class LazySerializerTest : PreparedSpec({
 			delay(1) // Give the machinery a chance to run
 			serializer.flush()
 
-			withClue("After flushing the serializer, both writes should have been replicated") {
-				spy.countWrites() shouldBe 2
-			}
+			println("After flushing the serializer, both writes should have been replicated")
+			check(spy.countWrites() == 2)
 		}
 
 		test("Writes are executed when 'close' is called") {
@@ -106,9 +102,8 @@ class LazySerializerTest : PreparedSpec({
 			delay(1) // Give the machinery a chance to run
 			serializer.close()
 
-			withClue("After closing the serializer, both writes should have been replicated") {
-				spy.countWrites() shouldBe 2
-			}
+			println("After closing the serializer, both writes should have been replicated")
+			check(spy.countWrites() == 2)
 		}
 	}
 
@@ -122,7 +117,7 @@ class LazySerializerTest : PreparedSpec({
 			delay(1) // Give the machinery a chance to run
 			serializer.flush()
 
-			spy.countWrites() shouldBe 1
+			check(spy.countWrites() == 1)
 		}
 
 		test("Values that have been written once are not written again") {
@@ -139,9 +134,8 @@ class LazySerializerTest : PreparedSpec({
 			delay(1) // Give the machinery a chance to run
 			serializer.flush()
 
-			withClue("We did two writes. If there are 3 writes reported, maybe the implementation has written again the first write, even though it has already been flushed?") {
-				spy.countWrites() shouldBe 2
-			}
+			println("We did two writes. If there are 3 writes reported, maybe the implementation has written again the first write, even though it has already been flushed?")
+			check(spy.countWrites() == 2)
 		}
 
 		test("After a close, writes are refused") {
@@ -153,7 +147,7 @@ class LazySerializerTest : PreparedSpec({
 			delay(1) // Give the machinery a chance to run
 			serializer.flush()
 
-			spy.countWrites() shouldBe 0
+			check(spy.countWrites() == 0)
 		}
 	}
 
@@ -168,9 +162,8 @@ class LazySerializerTest : PreparedSpec({
 			delay(1) // Give the machinery a chance to run
 			serializer.flush()
 
-			withClue("The last written value for a key wins") {
-				spy.read("a", Int::class) shouldBe 3
-			}
+			println("The last written value for a key wins")
+			check(spy.read("a", Int::class) == 3)
 		}
 
 		test("The latest written value wins, especially if the previous value was a default") {
@@ -183,9 +176,8 @@ class LazySerializerTest : PreparedSpec({
 			delay(1) // Give the machinery a chance to run
 			serializer.flush()
 
-			withClue("The last written value for a key wins") {
-				spy.read("a", Int::class) shouldBe 3
-			}
+			println("The last written value for a key wins")
+			check(spy.read("a", Int::class) == 3)
 		}
 
 		test("Default values do not override non-default values") {
@@ -198,9 +190,8 @@ class LazySerializerTest : PreparedSpec({
 			delay(1) // Give the machinery a chance to run
 			serializer.flush()
 
-			withClue("The default value should have been ignored, since another value was already written") {
-				spy.read("a", Int::class) shouldBe 2
-			}
+			println("The default value should have been ignored, since another value was already written")
+			check(spy.read("a", Int::class) == 2)
 		}
 	}
-})
+}
