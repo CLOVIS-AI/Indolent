@@ -1,14 +1,11 @@
 # List of dependencies of the project
 
 [versions]
-prepared = "1.0.1"            # https://gitlab.com/opensavvy/groundwork/prepared/-/releases
-coroutines = "1.8.0"          # https://github.com/Kotlin/kotlinx.coroutines/releases
+coroutines = "1.10.2"          # https://github.com/Kotlin/kotlinx.coroutines/releases
 
 [plugins]
 
 [libraries]
-prepared = { module = "dev.opensavvy.prepared:suite", version.ref = "prepared" }
-prepared-kotest = { module = "dev.opensavvy.prepared:runner-kotest", version.ref = "prepared" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "coroutines" }
 
 [bundles]

@@ -1,31 +1,27 @@
 package opensavvy.indolent.primitives
 
-import io.kotest.assertions.assertSoftly
-import io.kotest.matchers.shouldBe
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import opensavvy.prepared.runner.kotest.PreparedSpec
+import opensavvy.prepared.runner.testballoon.preparedSuite
 
 @OptIn(PrimitiveApi::class, ExperimentalCoroutinesApi::class)
-class ParserTest : PreparedSpec({
+val ParserTest by preparedSuite {
 
 	suite("Exceptions") {
 		test("Incorrect scalar type copying") {
 			val expectedCause = RuntimeException()
 
-			assertSoftly(Parser.IncorrectScalarTypeException("test", expectedCause).createCopy()) {
-				message shouldBe "test"
-				cause shouldBe expectedCause
-			}
+			val exception = Parser.IncorrectScalarTypeException("test", expectedCause).createCopy()
+			check(exception.message == "test")
+			check(exception.cause == expectedCause)
 		}
 
 		test("Cursor not found copying") {
 			val expectedCause = RuntimeException()
 
-			assertSoftly(Parser.CursorNotFoundException("test", expectedCause).createCopy()) {
-				message shouldBe "test"
-				cause shouldBe expectedCause
-			}
+			val exception = Parser.CursorNotFoundException("test", expectedCause).createCopy()
+			check(exception.message == "test")
+			check(exception.cause == expectedCause)
 		}
 	}
 
-})
+}
