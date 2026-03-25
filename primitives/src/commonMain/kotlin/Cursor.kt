@@ -2,6 +2,8 @@ package opensavvy.indolent.primitives
 
 import opensavvy.indolent.primitives.Cursor.Companion.root
 import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 
 /**
  * An identifier that describes a specific value from a data source.
@@ -90,7 +92,7 @@ class Cursor<ParentKey : Any, Key : Any, out Content> private constructor(
 		 * Some types deserve special treatment, see [Series] and [Record].
 		 */
 		@PrimitiveApi
-		data class Scalar<Content : Any>(val type: KClass<Content>) : Type<Any, Content>()
+		data class Scalar<Content>(val type: KType) : Type<Any, Content>()
 
 		/**
 		 * A series is a cursor that contains an unknown number of elements.
@@ -116,6 +118,15 @@ class Cursor<ParentKey : Any, Key : Any, out Content> private constructor(
 		 */
 		@PrimitiveApi
 		data object Record : Type<RecordIndex, Nothing>()
+
+		companion object {
+			/**
+			 * Creates a scalar for type [Content].
+			 */
+			@PrimitiveApi
+			inline fun <reified Content> Scalar(): Scalar<Content> =
+				Scalar(typeOf<Content>())
+		}
 	}
 
 	private fun StringBuilder.generateString() {
@@ -136,7 +147,7 @@ class Cursor<ParentKey : Any, Key : Any, out Content> private constructor(
 
 		if (type is Type.Scalar<*>) {
 			append(" {")
-			append(type.type.simpleName ?: type.type.toString())
+			append((type.type.classifier as? KClass<*>)?.simpleName ?: type.type.toString())
 			append('}')
 		}
 	}
