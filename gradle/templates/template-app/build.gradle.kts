@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 plugins {
 	alias(opensavvyConventions.plugins.base)
 	alias(opensavvyConventions.plugins.kotlin.application)
+	alias(libsCommon.plugins.kotest)
 	alias(libsCommon.plugins.ksp)
 }
 
@@ -46,6 +47,11 @@ kotlin {
 	}
 
 	sourceSets.commonTest.dependencies {
-		implementation(libsCommon.opensavvy.prepared.kotest)
+		implementation(libsCommon.bundles.kotest)
 	}
+}
+
+tasks.withType<AbstractTestTask> {
+	// Kotest doesn't report test correctly as of now
+	failOnNoDiscoveredTests = false
 }
