@@ -1,14 +1,15 @@
 package opensavvy.indolent.primitives
 
 import opensavvy.indolent.primitives.Cursor.Companion.root
-import opensavvy.indolent.primitives.Cursor.Type
 import kotlin.reflect.KClass
 
 /**
  * An identifier that describes a specific value from a data source.
  *
  * Cursor instances are not typesafe: there is no way to verify that a cursor corresponds to an actual value
- * without asking a parser.
+ * without asking a [parser][Parser].
+ *
+ * Cursors do not store values.
  *
  * ### The cursor tree
  *
@@ -22,7 +23,7 @@ import kotlin.reflect.KClass
  * ```
  */
 @PrimitiveApi
-class Cursor<ParentKey, Key, out Content> private constructor(
+class Cursor<ParentKey : Any, Key : Any, out Content> private constructor(
 	/**
 	 * Identifier of the current element as a child of [parent].
 	 *
@@ -33,8 +34,8 @@ class Cursor<ParentKey, Key, out Content> private constructor(
 	/**
 	 * A cursor knows which [type][Type] of data it expects to read.
 	 *
-	 * The cursor itself cannot verify whether it actually points to data of the given type.
-	 * However, any parser asked to read information about a cursor will assume that the type is respected.
+	 * The cursor itself doesn't store any data, so it cannot verify that what it points to has that type.
+	 * However, any [parser][Parser] asked to read information about a cursor will assume that the type is respected.
 	 * Therefore, the type may have an impact on reading when a value is ambiguous.
 	 */
 	val type: Type<Key, Content>,
@@ -51,7 +52,11 @@ class Cursor<ParentKey, Key, out Content> private constructor(
 		if (parent == null) {
 			require(key == Unit) { "The root cursor must have the key Unit, but found $key" }
 		} else {
-			require(key is String || key is Long) { "Non-root cursors must have keys of type String or Long, but found $key" }
+			when (parent.type) {
+				is Type.Scalar -> throw IllegalArgumentException("A cursor cannot be a child of a scalar cursor: $this")
+				is Type.Series -> require(key is Long) { "Cursors that are children of a series cursor must have a key of type Long, but found: $key (${key::class})" }
+				is Type.Record -> require(key is String) { "Cursors that are children of a record cursor must have a key of type String, but found: $key (${key::class})" }
+			}
 		}
 	}
 
@@ -62,7 +67,7 @@ class Cursor<ParentKey, Key, out Content> private constructor(
 	 * @param type See [Cursor.type].
 	 */
 	@PrimitiveApi
-	fun <ChildKey, ChildContent> child(key: Key, type: Type<ChildKey, ChildContent>): Cursor<Key, ChildKey, ChildContent> =
+	fun <ChildKey : Any, ChildContent> child(key: Key, type: Type<ChildKey, ChildContent>): Cursor<Key, ChildKey, ChildContent> =
 		Cursor(key, type, this)
 
 	/**
@@ -76,7 +81,7 @@ class Cursor<ParentKey, Key, out Content> private constructor(
 		/**
 		 * A type that is atomically read by a parser.
 		 *
-		 * This library considers values of this type is opaque elements.
+		 * This library considers values of this type are opaque elements.
 		 * This type may be used when parsing values of simple value types ([Int], [String]…).
 		 *
 		 * This type may also be used to parse custom types (custom classes…). Note, however, that the parsing is done
@@ -154,7 +159,7 @@ class Cursor<ParentKey, Key, out Content> private constructor(
 	}
 
 	override fun hashCode(): Int {
-		var result = key?.hashCode() ?: 0
+		var result = key.hashCode()
 		result = 31 * result + type.hashCode()
 		result = 31 * result + (parent?.hashCode() ?: 0)
 		return result
@@ -171,7 +176,7 @@ class Cursor<ParentKey, Key, out Content> private constructor(
 		 * Further cursors may be created with [child].
 		 */
 		@PrimitiveApi
-		fun <Key, Content> root(type: Type<Key, Content>) = Cursor(
+		fun <Key : Any, Content> root(type: Type<Key, Content>) = Cursor(
 			Unit,
 			type,
 			null,
