@@ -7,24 +7,13 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import opensavvy.prepared.runner.testballoon.preparedSuite
 import opensavvy.prepared.suite.backgroundScope
-
-@OptIn(PrimitiveApi::class)
-private fun <T> immutableObservable(value: T) = object : Observable<T> {
-	override fun observe(): Flow<T> = flow {
-		println("An immutable observable has been asked to compute its value: $value")
-		emit(value)
-		awaitCancellation()
-	}
-
-	override fun toString() = "ImmutableObservable($value)"
-}
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 @OptIn(PrimitiveApi::class)
 private inline fun <reified T : Any> Serializer.writeHelper(key: String, value: T, default: Boolean = false) {
-	val cursor = Cursor.root(Cursor.Type.Record).child(key, Cursor.Type.Scalar(T::class))
-	val obs = immutableObservable(value)
+	val cursor = Cursor.root(Cursor.Type.Record).child(key, Cursor.Type.Scalar<T>())
+	val obs = Observable.immutable(value)
 
 	if (default) {
 		writeDefault(cursor, obs)

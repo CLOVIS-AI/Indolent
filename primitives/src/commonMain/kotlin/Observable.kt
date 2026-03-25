@@ -1,6 +1,8 @@
 package opensavvy.indolent.primitives
 
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 
 /**
  * Wrapper for a value that changes over time.
@@ -38,4 +40,24 @@ interface Observable<out T> {
 	 */
 	@PrimitiveApi
 	fun observe(): Flow<T>
+
+	companion object {
+
+		/**
+		 * Creates an immutable obversable that will forever have the value [value].
+		 *
+		 * The returned observable can never be mutated.
+		 */
+		fun <T> immutable(value: T): Observable<T> =
+			object : Observable<T> {
+				@PrimitiveApi
+				override fun observe(): Flow<T> = flow {
+					emit(value)
+					awaitCancellation()
+				}
+
+				override fun toString(): String =
+					"Observable.immutable($value)"
+			}
+	}
 }
