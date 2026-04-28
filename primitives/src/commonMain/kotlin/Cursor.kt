@@ -192,6 +192,16 @@ class Cursor<ParentKey : Any, Key : Any, out Content> private constructor(
 			type,
 			null,
 		)
+
+		/**
+		 * Instantiates a root [Cursor] with the type [Type.Record].
+		 *
+		 * The root cursor has the key [Unit] and has no parent.
+		 * Further cursors may be created with [child].
+		 */
+		@PrimitiveApi
+		fun root(): Cursor<Unit, RecordIndex, Nothing> =
+			root(Type.Record)
 	}
 }
 
