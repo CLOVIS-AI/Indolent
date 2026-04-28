@@ -12,7 +12,7 @@ val CursorTest by preparedSuite {
 	suite("Root cursors") {
 		suite("Scalars") {
 			test("Integer") {
-				Cursor.root(Cursor.Type.Scalar(Int::class)) shouldBeString "# {Int}"
+				Cursor.root(Cursor.Type.Scalar<Int>()) shouldBeString "# {Int}"
 			}
 		}
 
@@ -30,7 +30,7 @@ val CursorTest by preparedSuite {
 			Cursor.root(Cursor.Type.Series)
 				.child(2, Cursor.Type.Series)
 				.child(3, Cursor.Type.Record)
-				.child("foo", Cursor.Type.Scalar(String::class))
+				.child("foo", Cursor.Type.Scalar<String>())
 				.shouldBeString("#.2.3.foo {String}")
 		}
 
@@ -39,21 +39,21 @@ val CursorTest by preparedSuite {
 				.child("simple", Cursor.Type.Record)
 				.child("with a space", Cursor.Type.Record)
 				.child("with a \" character", Cursor.Type.Record)
-				.child("with a . character", Cursor.Type.Scalar(Int::class))
+				.child("with a . character", Cursor.Type.Scalar<Int>())
 				.shouldBeString("#.simple.\"with a space\".\"with a \\\" character\".\"with a . character\" {Int}")
 		}
 	}
 
 	test("Equality") {
 		val set = buildSet {
-			add(Cursor.root(Cursor.Type.Scalar(Int::class)))
-			add(Cursor.root(Cursor.Type.Scalar(Int::class)))
-			add(Cursor.root(Cursor.Type.Record).child("foo", Cursor.Type.Scalar(String::class)))
+			add(Cursor.root(Cursor.Type.Scalar<Int>()))
+			add(Cursor.root(Cursor.Type.Scalar<Int>()))
+			add(Cursor.root(Cursor.Type.Record).child("foo", Cursor.Type.Scalar<String>()))
 		}
 
 		check(set == setOf(
-			Cursor.root(Cursor.Type.Scalar(Int::class)),
-			Cursor.root(Cursor.Type.Record).child("foo", Cursor.Type.Scalar(String::class))
+			Cursor.root(Cursor.Type.Scalar<Int>()),
+			Cursor.root(Cursor.Type.Record).child("foo", Cursor.Type.Scalar<String>())
 		))
 	}
 }

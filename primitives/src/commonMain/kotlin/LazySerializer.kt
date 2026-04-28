@@ -36,7 +36,7 @@ private class SerializeOnFlush(
 		}
 	}
 
-	override fun <T> write(cursor: Cursor<*, *, T>, content: Observable<T>) {
+	override suspend fun <T> write(cursor: Cursor<*, *, T>, content: Observable<T>) {
 		val owner = Triple("write", cursor, content)
 		onWaitListAvailable(owner) {
 			onBufferAvailable(owner) {
@@ -45,7 +45,7 @@ private class SerializeOnFlush(
 		}
 	}
 
-	override fun <T> writeDefault(cursor: Cursor<*, *, T>, content: Observable<T>) {
+	override suspend fun <T> writeDefault(cursor: Cursor<*, *, T>, content: Observable<T>) {
 		val owner = Triple("default write", cursor, content)
 		onWaitListAvailable(owner) {
 			onBufferAvailable(owner) {

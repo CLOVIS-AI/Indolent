@@ -2,31 +2,18 @@
 
 package opensavvy.indolent.primitives
 
-import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import opensavvy.prepared.runner.testballoon.preparedSuite
 import opensavvy.prepared.suite.backgroundScope
-import kotlin.reflect.KClass
+import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 
 @OptIn(PrimitiveApi::class)
-private fun <T> immutableObservable(value: T) = object : Observable<T> {
-	override fun observe(): Flow<T> = flow {
-		println("An immutable observable has been asked to compute its value: $value")
-		emit(value)
-		awaitCancellation()
-	}
-
-	override fun toString() = "ImmutableObservable($value)"
-}
-
-@OptIn(PrimitiveApi::class)
-private inline fun <reified T : Any> Serializer.writeHelper(key: String, value: T, default: Boolean = false) {
-	val cursor = Cursor.root(Cursor.Type.Record).child(key, Cursor.Type.Scalar(T::class))
-	val obs = immutableObservable(value)
+private suspend inline fun <reified T : Any> Serializer.writeHelper(key: String, value: T, default: Boolean = false) {
+	val cursor = Cursor.root(Cursor.Type.Record).child(key, Cursor.Type.Scalar<T>())
+	val obs = Observable.immutable(value)
 
 	if (default) {
 		writeDefault(cursor, obs)
@@ -58,10 +45,13 @@ private class SpyDirectSerializer : DirectSerializer {
 	override suspend fun close() {}
 
 	suspend fun countWrites() = lock.withLock { writeCounter }
-	suspend fun read(key: String, type: KClass<*>) = lock.withLock {
-		data[Cursor.root(Cursor.Type.Record).child(key, Cursor.Type.Scalar(type))]
+	suspend fun <Content> read(key: String, type: KType): Any? = lock.withLock {
+		data[Cursor.root(Cursor.Type.Record).child(key, Cursor.Type.Scalar<Content>(type))]
 	}
 }
+
+private suspend inline fun <reified Content> SpyDirectSerializer.read(key: String): Content? =
+	read<Content>(key, typeOf<Content>()) as Content?
 
 val LazySerializerTest by preparedSuite {
 	suite("Writes are delayed until flushes") {
@@ -163,7 +153,7 @@ val LazySerializerTest by preparedSuite {
 			serializer.flush()
 
 			println("The last written value for a key wins")
-			check(spy.read("a", Int::class) == 3)
+			check(spy.read<Int>("a") == 3)
 		}
 
 		test("The latest written value wins, especially if the previous value was a default") {
@@ -177,7 +167,7 @@ val LazySerializerTest by preparedSuite {
 			serializer.flush()
 
 			println("The last written value for a key wins")
-			check(spy.read("a", Int::class) == 3)
+			check(spy.read<Int>("a") == 3)
 		}
 
 		test("Default values do not override non-default values") {
@@ -191,7 +181,7 @@ val LazySerializerTest by preparedSuite {
 			serializer.flush()
 
 			println("The default value should have been ignored, since another value was already written")
-			check(spy.read("a", Int::class) == 2)
+			check(spy.read<Int>("a") == 2)
 		}
 	}
 }

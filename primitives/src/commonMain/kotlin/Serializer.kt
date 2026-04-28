@@ -12,12 +12,12 @@ interface Serializer {
 	/**
 	 * Writes [content] at the position referred to by [cursor].
 	 */
-	fun <T> write(cursor: Cursor<*, *, T>, content: Observable<T>)
+	suspend fun <T> write(cursor: Cursor<*, *, T>, content: Observable<T>)
 
 	/**
 	 * Writes [content] at the position referred to by [cursor], but only if no value has already been written there.
 	 */
-	fun <T> writeDefault(cursor: Cursor<*, *, T>, content: Observable<T>)
+	suspend fun <T> writeDefault(cursor: Cursor<*, *, T>, content: Observable<T>)
 
 	/**
 	 * Forces the serializer to write all its contents.
