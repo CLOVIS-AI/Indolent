@@ -11,7 +11,7 @@ import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
 @OptIn(PrimitiveApi::class)
-private inline fun <reified T : Any> Serializer.writeHelper(key: String, value: T, default: Boolean = false) {
+private suspend inline fun <reified T : Any> Serializer.writeHelper(key: String, value: T, default: Boolean = false) {
 	val cursor = Cursor.root(Cursor.Type.Record).child(key, Cursor.Type.Scalar<T>())
 	val obs = Observable.immutable(value)
 
