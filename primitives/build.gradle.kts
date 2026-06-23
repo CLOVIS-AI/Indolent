@@ -11,9 +11,23 @@ kotlin {
 		nodejs()
 	}
 	linuxX64()
+	linuxArm64()
+	macosArm64()
 	iosArm64()
 	iosSimulatorArm64()
-	iosX64()
+	watchosArm32()
+	watchosArm64()
+	watchosSimulatorArm64()
+	tvosArm64()
+	tvosSimulatorArm64()
+	mingwX64()
+	wasmJs {
+		browser()
+		nodejs()
+	}
+	wasmWasi {
+		nodejs()
+	}
 
 	sourceSets.commonMain.dependencies {
 		api(libs.kotlinx.coroutines)
